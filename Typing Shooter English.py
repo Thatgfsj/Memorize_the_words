@@ -1,29 +1,22 @@
 import os, json, random, sys, re, warnings
 import pygame
-
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOCAB_PATH = os.path.join(BASE_DIR, "vocabulary.js")
-
 pygame.init()
 pygame.font.init()
 input_rect = pygame.Rect(0, 0, 0, 0)
 pygame.key.set_text_input_rect(input_rect)
-
 W, H = 960, 600
 SCREEN = pygame.display.set_mode((W, H))
 pygame.display.set_caption("今天背单词了吗")
-
 menu_surface = pygame.Surface((W, H))
 study_surface = pygame.Surface((W, H))
 test_surface = pygame.Surface((W, H))
 gameover_surface = pygame.Surface((W, H))
 complete_surface = pygame.Surface((W, H))
 practice_surface = pygame.Surface((W, H))
-
 CLOCK = pygame.time.Clock()
-
 def textwrap(text, width=18):
     lines = []
     current_line = ""
@@ -35,7 +28,6 @@ def textwrap(text, width=18):
     if current_line.strip():
         lines.append(current_line.strip())
     return lines
-
 def get_font(size, bold=False):
     font_path1 = os.path.join(BASE_DIR, "assets", "msyh.ttc")
     font_path2 = "C:/Windows/Fonts/msyh.ttc"
@@ -47,14 +39,12 @@ def get_font(size, bold=False):
     except Exception:
         pass
     return pygame.font.SysFont("arial", size, bold=bold)
-
 FONT = get_font(26)
 BIG = get_font(40, bold=True)
 MID = get_font(28, bold=True)
 SMALL = get_font(20)
 TITLE_FONT = get_font(36, bold=True)
 TINY = get_font(16)
-
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (35, 40, 48)
@@ -68,17 +58,14 @@ LIGHT_GRAY = (200, 200, 220)
 MENU_BG = (30, 30, 45)
 TEXT_COLOR = (240, 240, 255)
 PANEL_BG = (30, 35, 50, 230)
-
 def load_beep():
     try:
         return pygame.mixer.Sound(file=os.path.join(BASE_DIR, "assets", "beep.ogg"))
     except Exception:
         return None
-
 hit_sound = load_beep()
 correct_sound = load_beep()
 mute = False
-
 def play_sound(sound):
     global mute
     if not sound or mute:
@@ -87,18 +74,15 @@ def play_sound(sound):
         sound.play()
     except Exception:
         pass
-
 def draw_bg(surface=None):
     target = surface if surface else SCREEN
     for y in range(H):
         c = 25 + int(30 * (y / H))
         pygame.draw.line(target, (20, 20, 35 + c), (0, y), (W, y))
-
 def draw_top_decor(surface=None):
     target = surface if surface else SCREEN
     pygame.draw.rect(target, MENU_BG, (0, 0, W, 80))
     pygame.draw.line(target, ACCENT, (0, 80), (W, 80), 3)
-
 def draw_text(text, font, color, x, y, center=False, surface=None):
     target = surface if surface else SCREEN
     surf = font.render(text, True, color)
@@ -109,20 +93,17 @@ def draw_text(text, font, color, x, y, center=False, surface=None):
         rect.topleft = (x, y)
     target.blit(surf, rect)
     return rect
-
 def draw_pill(x, y, w, h, color, surface=None):
     target = surface if surface else SCREEN
     radius = h // 2
     pygame.draw.rect(target, color, (x + radius, y, w - 2 * radius, h), border_radius=radius)
     pygame.draw.circle(target, color, (x + radius, y + radius), radius)
     pygame.draw.circle(target, color, (x + w - radius, y + radius), radius)
-
 def draw_button(text, x, y, w, h, color, txt_color=BLACK, surface=None):
     target = surface if surface else SCREEN
     draw_pill(x, y, w, h, color, target)
     draw_text(text, MID, txt_color, x + w // 2, y + h // 2, center=True, surface=target)
     return pygame.Rect(x, y, w, h)
-
 try:
     with open(VOCAB_PATH, "r", encoding="utf-8") as f:
         js_content = f.read()
@@ -137,19 +118,15 @@ except json.JSONDecodeError as e:
 except Exception as e:
     print(f"加载词汇文件出错：{e}")
     DATA = {"levels": []}
-
 ALL_WORDS = []
 for level_words in DATA.get("levels", []):
     ALL_WORDS.extend(level_words)
-
 WORDS_PER_LEVEL = 50
 TOTAL_LEVELS = (len(ALL_WORDS) + WORDS_PER_LEVEL - 1) // WORDS_PER_LEVEL
-
 def get_level_words(level_index):
     start = level_index * WORDS_PER_LEVEL
     end = start + WORDS_PER_LEVEL
     return ALL_WORDS[start:end]
-
 class InputLine:
     def __init__(self):
         self.text = ""
@@ -158,7 +135,6 @@ class InputLine:
         self.timer = 0
         self.max_length = 50
         self.correct = None
-
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
@@ -187,7 +163,6 @@ class InputLine:
             self.composing = event.text
             self.correct = None
         return None
-
     def draw(self, y, surface=None, x_offset=0):
         x, w, h = 100 + x_offset, W - 200 - x_offset, 60
         if self.correct is True:
@@ -209,27 +184,22 @@ class InputLine:
         if self.timer > 500:
             self.caret = not self.caret
             self.timer = 0
-
     def set_correct(self, is_correct):
         self.correct = is_correct
-
 SCENE_MENU = "menu"
 SCENE_STUDY = "study"
 SCENE_PRACTICE = "practice"
 SCENE_TEST = "test"
 SCENE_GAMEOVER = "gameover"
 SCENE_COMPLETE = "complete"
-
 current_scene = SCENE_MENU
 selected_level = 0
 scroll_offset = 0
-
 study_index = 0
 practice_needed = 2
 practice_count = 0
 practice_input = InputLine()
 show_word = True
-
 class Monster:
     def __init__(self, entry):
         self.entry = entry
@@ -244,12 +214,10 @@ class Monster:
         self.cn_list = entry["meanings"]
         self.flash = 0
         self.spawn_time = pygame.time.get_ticks()
-
     def update(self, dt):
         self.y += self.vy * dt * 0.06
         if self.flash > 0:
             self.flash -= dt
-
     def draw(self, surface=None):
         color = (80, 160, 250) if self.flash <= 0 else (255, 255, 255)
         target = surface if surface else SCREEN
@@ -260,7 +228,6 @@ class Monster:
         else:
             display_text = f"{self.cn_list[0]}？"
         draw_text(display_text, TINY, WHITE, int(self.x), int(self.y) + 30, center=True, surface=target)
-
     def apply_hit(self, kind):
         if self.hp <= 0:
             return False
@@ -277,7 +244,6 @@ class Monster:
             play_sound(hit_sound)
             return True
         return False
-
 test_input = InputLine()
 test_timer = 0
 test_time_limit = 1200
@@ -285,7 +251,6 @@ test_lives = 3
 spawn_cooldown = 0
 monsters = []
 score = 0
-
 def reset_study():
     global study_index, practice_needed, practice_count, current_scene, show_word
     study_index = 0
@@ -293,7 +258,6 @@ def reset_study():
     practice_count = 0
     show_word = True
     current_scene = SCENE_STUDY
-
 def reset_test():
     global test_input, test_timer, test_time_limit, test_lives, spawn_cooldown, monsters, score
     test_input = InputLine()
@@ -303,18 +267,15 @@ def reset_test():
     spawn_cooldown = 0
     monsters = []
     score = 0
-
 def change_scene(target):
     global current_scene
     current_scene = target
-
 def draw_topbar(title, surface=None):
     target = surface if surface else SCREEN
     pygame.draw.rect(target, MENU_BG, (0, 0, W, 50))
     draw_text(title, MID, WHITE, 20, 15, surface=target)
     mute_text = "M 开启声音" if mute else "M 静音"
     draw_text(f"Esc 返回  |  {mute_text}", TINY, (200, 200, 220), W - 200, 18, surface=target)
-
 def handle_global_events(event):
     global mute, current_scene, scroll_offset, show_word
     if event.type == pygame.KEYDOWN:
@@ -332,7 +293,6 @@ def handle_global_events(event):
         scroll_offset -= event.y * 50
         max_scroll = max(0, (TOTAL_LEVELS // 2) * 70 - (H - 200))
         scroll_offset = max(0, min(scroll_offset, max_scroll))
-
 def draw_menu_scene():
     global selected_level, scroll_offset
     menu_surface.fill(BLACK)
@@ -350,22 +310,24 @@ def draw_menu_scene():
         draw_text("暂无关卡数据", MID, RED, left_width // 2, H // 2, center=True, surface=menu_surface)
     right_x = left_width
     right_width = W - left_width
-    pygame.draw.rect(menu_surface, (30, 35, 50), (right_x, 0, right_width, H))
-    draw_text("选择关卡", BIG, WHITE, right_x + right_width // 2, 30, center=True, surface=menu_surface)
+    rect_top = 20
+    rect_height = H - 80 -20
+    pygame.draw.rect(menu_surface, (30, 35, 50), (right_x, rect_top, right_width, rect_height))
+    draw_text("选择关卡", BIG, WHITE, right_x + right_width // 2, rect_top + 30, center=True, surface=menu_surface)
     if not ALL_WORDS:
         draw_text("未找到词汇数据，请检查vocabulary.js文件", SMALL, RED, 
                  right_x + right_width // 2, H // 2, center=True, surface=menu_surface)
     else:
-        cols = 2
+        cols = 3
         gap = 15
         btn_width, btn_height = 150, 50
         start_x = right_x + (right_width - (cols * btn_width + (cols - 1) * gap)) // 2
-        y_start = 80
+        y_start = rect_top 
         mouse_pos = pygame.mouse.get_pos()
         total_levels = TOTAL_LEVELS
         for i in range(total_levels):
             y_pos = y_start + (i // cols) * (btn_height + gap) - scroll_offset
-            if y_pos > H + btn_height or y_pos + btn_height < 0:
+            if y_pos > rect_top + rect_height or y_pos + btn_height < rect_top:
                 continue
             rect = pygame.Rect(start_x + (i % cols) * (btn_width + gap), y_pos, btn_width, btn_height)
             if i == selected_level:
@@ -405,13 +367,15 @@ def draw_menu_scene():
     click = pygame.mouse.get_pressed(3)[0]
     if click:
         if TOTAL_LEVELS > 0 and mouse_pos[0] > right_x:
-            cols = 2
+            cols = 3 
             gap = 15
             btn_width, btn_height = 150, 50
             start_x = right_x + (right_width - (cols * btn_width + (cols - 1) * gap)) // 2
-            y_start = 80
+            y_start = rect_top
             for i in range(TOTAL_LEVELS):
                 y_pos = y_start + (i // cols) * (btn_height + gap) - scroll_offset
+                if y_pos > rect_top + rect_height or y_pos + btn_height < rect_top:
+                    continue
                 rect = pygame.Rect(start_x + (i % cols) * (btn_width + gap), y_pos, btn_width, btn_height)
                 if rect.collidepoint(mouse_pos):
                     selected_level = i
@@ -421,7 +385,6 @@ def draw_menu_scene():
         if test_btn.collidepoint(mouse_pos) and TOTAL_LEVELS > 0:
             reset_test()
             change_scene(SCENE_TEST)
-
 def draw_study_scene():
     study_surface.fill(BLACK)
     draw_bg(study_surface)
@@ -478,7 +441,6 @@ def draw_study_scene():
         pygame.draw.rect(study_surface, (120, 170, 220), (W//2 - 95, y_offset - 5, 20, 5), border_radius=2)
         draw_text("按 Enter 键继续到下一个单词", SMALL, (200, 200, 220), W//2 - 60, y_offset, surface=study_surface)
     SCREEN.blit(study_surface, (0, 0))
-
 def handle_study_events(event):
     global study_index
     if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
@@ -487,7 +449,6 @@ def handle_study_events(event):
             study_index += 1
         else:
             study_index += 1
-
 def draw_complete_scene():
     complete_surface.fill(BLACK)
     draw_bg(complete_surface)
@@ -511,7 +472,6 @@ def draw_complete_scene():
             change_scene(SCENE_TEST)
         if menu_btn.collidepoint(mouse_pos):
             change_scene(SCENE_MENU)
-
 def draw_practice_scene():
     global practice_count, study_index
     practice_surface.fill(BLACK)
@@ -571,7 +531,6 @@ def draw_practice_scene():
             pygame.draw.rect(practice_surface, (120, 170, 220), (W//2 - 95, y_offset - 5, 20, 5), border_radius=2)
             draw_text("输入英文单词并按 Enter 提交", SMALL, (200, 200, 220), W//2 - 60, y_offset, surface=practice_surface)
     SCREEN.blit(practice_surface, (0, 0))
-
 def handle_practice_events(event):
     global practice_count, study_index
     words = get_level_words(selected_level)
@@ -601,7 +560,6 @@ def handle_practice_events(event):
             study_index += 1
             if study_index >= len(words):
                 study_index = len(words)
-
 def draw_test_scene(dt):
     global test_timer, spawn_cooldown, test_lives, score
     test_surface.fill(BLACK)
@@ -656,17 +614,14 @@ def draw_test_scene(dt):
                 change_scene(SCENE_GAMEOVER)
     test_input.draw(H - 60, test_surface, x_offset=panel_width)
     SCREEN.blit(test_surface, (0, 0))
-
 def normalize_english(s):
     return re.sub(r"[^a-z]", "", s.lower())
-
 def match_chinese(user_input, chinese_list):
     user = user_input.strip()
     for meaning in chinese_list:
         if user and user in meaning:
             return True
     return False
-
 def handle_test_events(event):
     global score
     result = test_input.handle_event(event)
@@ -739,6 +694,5 @@ def main():
         pygame.display.flip()
     pygame.quit()
     sys.exit()
-
 if __name__ == "__main__":
     main()
