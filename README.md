@@ -1,28 +1,9 @@
 # -python-
 Typing Shooter English 是一个基于 pygame 的单词记忆与拼写练习游戏，帮助你通过趣味闯关和练习模式高效背单词。
-
-主要功能
-  学习模式：逐个学习单词及释义，支持隐藏/显示单词。
-  练习模式：输入英文单词拼写，正确多次后自动进入下一个单词。
-  闯关模式：击败“怪物”答题，既考英文拼写也考中文释义，限时闯关。
-  关卡选择：支持多关卡，每关包含固定数量单词。
-  音效支持：答题正确/错误有音效提示，可一键静音。（音效需要自己准备）
-  进度与得分：实时显示学习进度、练习正确次数、闯关得分与剩余生命。
 安装与运行
-环境依赖
-  Python 3.x
-  pygame
-安装依赖
-  pip install pygame
-准备词库
-  vocabulary.js
-在项目根目录下放置 vocabulary.js，格式与本仓库文件一致即可：
-启动游戏
+环境依赖  Python 3.x；pygame      
+安装依赖  pip install pygame      
+准备词库  vocabulary.js      
+（如果是自己准备英语词库，需要重命名 vocabulary.js，数据结构与本仓库文件一致即可）      
+启动游戏  python Memorize_the_words.py
 
-python Memorize_the_words.py
-操作说明
-主菜单：选择关卡，进入学习/练习/闯关模式。
-Esc：返回主菜单
-M：切换静音/开启声音
-空格：学习模式下隐藏/显示单词
-回车：提交答案或进入下一个单词
