@@ -1,4 +1,5 @@
 #Typing Shooter English
+
 Typing Shooter English 是一个基于 pygame 的单词记忆与拼写练习游戏，帮助你通过趣味闯关和练习模式高效背单词。
 安装与运行
 环境依赖  Python 3.x；pygame      
